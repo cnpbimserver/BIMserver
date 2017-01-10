@@ -36,7 +36,7 @@ public class LocalDevBimServerStarter {
 		config.setLocalDev(true);
 		config.setPort(port);
 		config.setStartCommandLine(true);
-		config.setDevelopmentBaseDir(Paths.get("../BimServer"));
+		config.setDevelopmentBaseDir(Paths.get("./BimServer"));
 		bimServer = new BimServer(config);
 		bimServer.getVersionChecker().getLocalVersion().setDate(new Date());
 		bimServer.setEmbeddedWebServer(new EmbeddedWebServer(bimServer, config.getDevelopmentBaseDir(), config.isLocalDev()));
@@ -44,11 +44,12 @@ public class LocalDevBimServerStarter {
 			bimServer.start();
 			LocalDevPluginLoader.loadPlugins(bimServer.getPluginManager(), pluginDirectories);
 			try {
-				AdminInterface adminInterface = bimServer.getServiceFactory().get(new SystemAuthorization(1, TimeUnit.HOURS), AccessMethod.INTERNAL).get(AdminInterface.class);
+			/*	AdminInterface adminInterface = bimServer.getServiceFactory().get(new SystemAuthorization(1, TimeUnit.HOURS), AccessMethod.INTERNAL).get(AdminInterface.class);
 				adminInterface.setup("http://localhost:" + port, "My BIMserver", "My Description", "http://localhost:" + port + "/img/bimserver.png", "Administrator", "admin@bimserver.org", "admin");
 				SettingsInterface settingsInterface = bimServer.getServiceFactory().get(new SystemAuthorization(1, TimeUnit.HOURS), AccessMethod.INTERNAL).get(SettingsInterface.class);
 				settingsInterface.setCacheOutputFiles(false);
 				settingsInterface.setPluginStrictVersionChecking(false);
+				*/
 			} catch (Exception e) {
 				// Ignore
 			}

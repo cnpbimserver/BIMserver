@@ -1,24 +1,33 @@
 package org.bimserver.longaction;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /******************************************************************************
  * Copyright (C) 2009-2016  BIMserver.org
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see {@literal<http://www.gnu.org/licenses/>}.
  *****************************************************************************/
-
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.util.EntityUtils;
 import org.bimserver.BimServer;
 import org.bimserver.database.DatabaseSession;
 import org.bimserver.database.ProgressHandler;
@@ -96,12 +105,42 @@ public class LongStreamingCheckinAction extends LongAction<LongCheckinActionKey>
 			done();
 		}
 	}
-	
+
 	@Override
 	protected void done() {
 		super.done();
 
-		// This is very important! The LongCheckinAction will probably live another 30 minutes 
+		String dispatchServiceurl = System.getenv("dispatchServiceUrl");
+		String reportFlag = System.getenv("reportFlag");
+		boolean flag = reportFlag == null ? false : Boolean.valueOf(reportFlag);
+		if( dispatchServiceurl != null && flag ) {
+			dispatchServiceurl = dispatchServiceurl.trim();
+			long poid = checkinDatabaseAction.getPoid();
+			long roid = checkinDatabaseAction.getRevision().getId();
+			String fileName = checkinDatabaseAction.getFileName();
+
+			try{
+				HttpPost  post = new HttpPost(dispatchServiceurl);
+				List<NameValuePair> params = new ArrayList<NameValuePair>();
+				params.add(new BasicNameValuePair("poid",String.valueOf(poid)));
+				params.add(new BasicNameValuePair("roid",String.valueOf(roid)));
+				params.add(new BasicNameValuePair("fileName",fileName));
+				post.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
+				HttpResponse response = new DefaultHttpClient().execute(post);
+				if( response.getStatusLine().getStatusCode() == 200 ){
+					String result = EntityUtils.toString(response.getEntity());
+					System.out.println("report result: " + result);
+				}else {
+					System.out.println("report result: " +  response.getStatusLine().getStatusCode());
+				}
+			}catch(Exception e){
+				LOGGER.error("", e);
+			}
+		}else {
+			LOGGER.error("please remember to config the dispatchServiceurl enviroment reportFlag");
+		}
+
+		// This is very important! The LongCheckinAction will probably live another 30 minutes
 		// before it will be cleaned up (this is useful for clients asking for the progress/status of this checkin)
 		checkinDatabaseAction = null;
 	}

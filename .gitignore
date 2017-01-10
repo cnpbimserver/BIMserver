@@ -1,0 +1,12 @@
+/.apt_generated
+/bin
+/home
+/home1
+/home2
+/target/
+.idea
+BimServerWar/home1564
+BimServerWar/server.xml
+*/*.iml
+*.iml
+gc.log.0.current
