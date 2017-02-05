@@ -20,6 +20,7 @@ package org.bimserver.plugins.services;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 import java.nio.file.Path;
 
 import org.bimserver.emf.IfcModelInterface;
@@ -34,6 +35,7 @@ import org.bimserver.shared.exceptions.PublicInterfaceNotFoundException;
 import org.bimserver.shared.exceptions.ServerException;
 import org.bimserver.shared.exceptions.UserException;
 import org.bimserver.shared.interfaces.AuthInterface;
+import org.bimserver.shared.interfaces.NotificationRegistryInterface;
 import org.bimserver.shared.interfaces.RemoteServiceInterface;
 
 public interface BimServerClientInterface extends ServiceHolder, AutoCloseable {
@@ -45,8 +47,8 @@ public interface BimServerClientInterface extends ServiceHolder, AutoCloseable {
 
 	void commit(IfcModelInterface model, String comment);
 	
-	void download(long roid, long serializerOid, OutputStream outputStream);
-	void download(long roid, long serializerOid, Path file) throws IOException;
+	void download(long roid, long serializerOid, OutputStream outputStream) throws BimServerClientException;
+	void download(long roid, long serializerOid, Path file) throws IOException, BimServerClientException;
 	
 	long checkin(long poid, String string, long deserializerOid, boolean merge, Flow flow, Path file) throws IOException, UserException, ServerException;
 	
@@ -73,6 +75,7 @@ public interface BimServerClientInterface extends ServiceHolder, AutoCloseable {
 
 	AuthInterface getBimServerAuthInterface() throws PublicInterfaceNotFoundException;
 	RemoteServiceInterface getRemoteServiceInterface() throws PublicInterfaceNotFoundException;
+	NotificationRegistryInterface getNotificationRegistryInterface() throws PublicInterfaceNotFoundException;
 
 	/**
 	 * This will close all the connections, call this method as soon as you are done using this BimServerClient
@@ -80,4 +83,5 @@ public interface BimServerClientInterface extends ServiceHolder, AutoCloseable {
 	void disconnect();
 	
 	MetaDataManager getMetaDataManager();
+	long checkin(long poid, String comment, long deserializerOid, boolean merge, Flow flow, URL url) throws UserException, ServerException;
 }

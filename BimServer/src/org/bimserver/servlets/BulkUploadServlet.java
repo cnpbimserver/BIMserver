@@ -15,7 +15,6 @@ import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload.util.Streams;
-import org.apache.cxf.jaxws.handler.types.FullyQualifiedClassType;
 import org.bimserver.BimServer;
 import org.bimserver.interfaces.objects.SDeserializerPluginConfiguration;
 import org.bimserver.interfaces.objects.SProject;
@@ -61,10 +60,6 @@ public class BulkUploadServlet extends SubServlet {
 				FileItemIterator iter = upload.getItemIterator(request);
 				InputStream in = null;
 				String name = "";
-				long deserializerOid = -1;
-				boolean sync = false;
-				String action = null;
-				long topicId = -1;
 				while (iter.hasNext()) {
 					FileItemStream item = iter.next();
 					if (item.isFormField()) {
@@ -74,12 +69,6 @@ public class BulkUploadServlet extends SubServlet {
 							poid = Long.parseLong(Streams.asString(item.openStream()));
 						} else if ("comment".equals(item.getFieldName())) {
 							comment = Streams.asString(item.openStream());
-						} else if ("topicId".equals(item.getFieldName())) {
-							topicId = Long.parseLong(Streams.asString(item.openStream()));
-						} else if ("sync".equals(item.getFieldName())) {
-							sync = Streams.asString(item.openStream()).equals("true");
-						} else if ("deserializerOid".equals(item.getFieldName())) {
-							deserializerOid = Long.parseLong(Streams.asString(item.openStream()));
 						}
 					} else {
 						name = item.getName();

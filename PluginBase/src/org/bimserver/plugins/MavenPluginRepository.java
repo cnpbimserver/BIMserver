@@ -3,7 +3,6 @@ package org.bimserver.plugins;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -14,43 +13,51 @@ import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory;
 import org.eclipse.aether.impl.DefaultServiceLocator;
 import org.eclipse.aether.repository.LocalRepository;
+import org.eclipse.aether.repository.LocalRepositoryManager;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
 import org.eclipse.aether.spi.connector.transport.TransporterFactory;
 import org.eclipse.aether.transport.file.FileTransporterFactory;
 import org.eclipse.aether.transport.http.HttpTransporterFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MavenPluginRepository {
+	private static final Logger LOGGER = LoggerFactory.getLogger(MavenPluginRepository.class);
 	private final RepositorySystem system;
 	private final RepositorySystemSession session;
-	private final List<RemoteRepository> repositories;
+	private final List<RemoteRepository> repositories = new ArrayList<>();
 	private List<RemoteRepository> localRepositories;
 	private final RemoteRepository remoteRepository;
-//	private final RemoteRepository remoteRepository2;
-	private String defaultRepository;
+	private String defaultRemoteRepositoryLocation;
 	private Path localRepoFile;
 	private RemoteRepository local;
 	
 	public MavenPluginRepository(Path localRepoFile) {
-		this(localRepoFile, "http://central.maven.org/maven2");
+		this(localRepoFile, "http://central.maven.org/maven2", "~/.m2");
 	}
 	
-	public MavenPluginRepository(Path localRepoFile, String defaultRepository) {
+	public MavenPluginRepository(Path localRepoFile, String defaultRemoteRepositoryLocation, String defaultLocalRepositoryLocation) {
 		this.localRepoFile = localRepoFile;
-		this.defaultRepository = defaultRepository;
+		this.defaultRemoteRepositoryLocation = defaultRemoteRepositoryLocation;
+
 		system = newRepositorySystem();
 		session = newRepositorySystemSession(system, localRepoFile);
-		RemoteRepository.Builder builder = new RemoteRepository.Builder("central", "default", defaultRepository);
+
+		RemoteRepository.Builder builder = new RemoteRepository.Builder("central", "default", defaultRemoteRepositoryLocation);
 		builder.setPolicy(new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_INTERVAL + ":60", RepositoryPolicy.CHECKSUM_POLICY_FAIL));
 		remoteRepository = builder.build();
 
-//		RemoteRepository.Builder builder2 = new RemoteRepository.Builder("maven", "default", "https://repository.apache.org/content/repositories/releases/");
-//		builder2.setPolicy(new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_INTERVAL + ":60", RepositoryPolicy.CHECKSUM_POLICY_FAIL));
-//		remoteRepository2 = builder2.build();
+		repositories.add(remoteRepository);
 
-		repositories = new ArrayList<RemoteRepository>(Arrays.asList(remoteRepository));
-		local = new RemoteRepository.Builder("local", "default", "file:" + localRepoFile).build();
+		if (defaultLocalRepositoryLocation != null) {
+			RemoteRepository.Builder localRepoBuilder = new RemoteRepository.Builder("local", "default", "file://" + defaultLocalRepositoryLocation);
+			localRepoBuilder.setPolicy(new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_INTERVAL + ":60", RepositoryPolicy.CHECKSUM_POLICY_FAIL));
+			repositories.add(localRepoBuilder.build());
+			LOGGER.info("Adding " + defaultLocalRepositoryLocation + " as repository");
+		}
+
 		localRepositories = new ArrayList<RemoteRepository>();
 		localRepositories.add(local);
 	}
@@ -64,7 +71,7 @@ public class MavenPluginRepository {
 	}
 	
 	public MavenPluginLocation getPluginLocation(String groupId, String artifactId) {
-		return new MavenPluginLocation(this, defaultRepository, groupId, artifactId);
+		return new MavenPluginLocation(this, defaultRemoteRepositoryLocation, groupId, artifactId);
 	}
 	
 	private RepositorySystem newRepositorySystem() {
@@ -87,7 +94,8 @@ public class MavenPluginRepository {
 		DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
 
 		LocalRepository localRepo = new LocalRepository(localRepoFile.toFile());
-		session.setLocalRepositoryManager(system.newLocalRepositoryManager(session, localRepo));
+		LocalRepositoryManager manager = system.newLocalRepositoryManager(session, localRepo);
+		session.setLocalRepositoryManager(manager);
 
 		return session;
 	}
@@ -102,10 +110,6 @@ public class MavenPluginRepository {
 	
 	public RepositorySystem getSystem() {
 		return system;
-	}
-
-	public String getRemoteRepositoryUrl() {
-		return defaultRepository;
 	}
 
 	public void clearCache() throws IOException {

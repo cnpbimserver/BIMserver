@@ -2,7 +2,7 @@ package org.bimserver.tests.emf;
 
 import static org.junit.Assert.fail;
 
-import java.nio.file.Paths;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,8 +28,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CreateProperties extends TestWithEmbeddedServer  {
-	private static final Logger LOGGER = LoggerFactory.getLogger(CreateProperties.class);
+public class TestCreateProperties extends TestWithEmbeddedServer  {
+	private static final Logger LOGGER = LoggerFactory.getLogger(TestCreateProperties.class);
 	@Test
 	public void test() {
 		try {
@@ -42,13 +42,13 @@ public class CreateProperties extends TestWithEmbeddedServer  {
 			// Look for a deserializer
 			SDeserializerPluginConfiguration deserializer = bimServerClient.getServiceInterface().getSuggestedDeserializerForExtension("ifc", project.getOid());
 			
-			bimServerClient.checkin(project.getOid(), "test", deserializer.getOid(), false, Flow.SYNC, Paths.get("../TestData/data/AC11-Institute-Var-2-IFC.ifc"));
+			bimServerClient.checkin(project.getOid(), "test", deserializer.getOid(), false, Flow.SYNC, new URL("https://github.com/opensourceBIM/TestFiles/raw/master/TestData/data/AC11-Institute-Var-2-IFC.ifc"));
 			
 			// Refresh project
 			project = bimServerClient.getServiceInterface().getProjectByPoid(project.getOid());
 			
 			// Load model without lazy loading (complete model at once)
-			IfcModelInterface model = bimServerClient.getModel(project, project.getLastRevisionId(), true, false);
+			IfcModelInterface model = bimServerClient.getModel(project, project.getLastRevisionId(), true, true);
 
 			String propertyName = "BooleanProperty";
 
@@ -59,10 +59,9 @@ public class CreateProperties extends TestWithEmbeddedServer  {
 				createProperty(window, model, propertyName, "Description of property", true);
 			}
 			
-			model.commit("Added boolean properties to " + nrWindowsFirst + " windows");
+			long newRoid = model.commit("Added boolean properties to " + nrWindowsFirst + " windows");
 			
-			project = bimServerClient.getServiceInterface().getProjectByPoid(project.getOid());
-			model = bimServerClient.getModel(project, project.getLastRevisionId(), true, false);
+			model = bimServerClient.getModel(project, newRoid, true, false);
 			int foundOke = 0;
 			int nrWindowsSecond = 0;
 			Set<Long> counted = new HashSet<Long>();

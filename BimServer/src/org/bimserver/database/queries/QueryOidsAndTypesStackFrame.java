@@ -18,7 +18,6 @@ package org.bimserver.database.queries;
  *****************************************************************************/
 
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -67,6 +66,7 @@ public class QueryOidsAndTypesStackFrame extends DatabaseReadingStackFrame imple
 			record = typeRecordIterator.next();
 		} else {
 //			LOGGER.warn("Potential too-many-reads");
+			oidIterator = oids.iterator();
 			typeRecordIterator = queryObjectProvider.getDatabaseSession().getKeyValueStore().getRecordIterator(tableName, BinUtils.intToByteArray(getReusable().getPid()), BinUtils.intToByteArray(getReusable().getPid()), queryObjectProvider.getDatabaseSession());
 			record = typeRecordIterator.next();
 		}

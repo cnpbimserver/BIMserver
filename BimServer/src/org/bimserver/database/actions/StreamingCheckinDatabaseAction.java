@@ -337,6 +337,7 @@ public class StreamingCheckinDatabaseAction extends GenericCheckinDatabaseAction
 		return concreteRevision;
 	}
 
+	@SuppressWarnings("unchecked")
 	private void fixInverses(PackageMetaData packageMetaData, long newRoid) throws QueryException, JsonParseException, JsonMappingException, IOException, BimserverDatabaseException {
 		// TODO remove cache, this is essentially a big part of the model in memory again
 		Map<Long, HashMapVirtualObject> cache = new HashMap<Long, HashMapVirtualObject>();
@@ -398,6 +399,9 @@ public class StreamingCheckinDatabaseAction extends GenericCheckinDatabaseAction
 		HashMapVirtualObject referencedObject = cache.get(refOid);
 		if (referencedObject == null) {
 			referencedObject = getByOid(packageMetaData, getDatabaseSession(), newRoid, refOid);
+			if (referencedObject == null) {
+				throw new BimserverDatabaseException("Referenced object with oid " + refOid + ", referenced from " + next.eClass().getName() + " not found");
+			}
 			cache.put(refOid, referencedObject);
 		}
 		EReference oppositeReference = packageMetaData.getInverseOrOpposite(referencedObject.eClass(), eReference);
@@ -405,7 +409,7 @@ public class StreamingCheckinDatabaseAction extends GenericCheckinDatabaseAction
 			if (eReference.getName().equals("RelatedElements") && referencedObject.eClass().getName().equals("IfcSpace")) {
 				// Ignore, IfcSpace should have  a field called RelatedElements, but it doesn't.
 			} else {
-				LOGGER.error("No opposite " + eReference.getName() + " found");
+//				LOGGER.error("No opposite " + eReference.getName() + " found");
 			}
 		} else {
 			if (oppositeReference.isMany()) {

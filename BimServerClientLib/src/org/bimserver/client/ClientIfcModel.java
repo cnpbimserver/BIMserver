@@ -250,6 +250,9 @@ public class ClientIfcModel extends IfcModel {
 	}
 
 	public long commit(String comment) throws ServerException, UserException, PublicInterfaceNotFoundException {
+		if (tid == -1) {
+			throw new UserException("No transaction was started");
+		}
 		return bimServerClient.getLowLevelInterface().commitTransaction(tid, comment);
 	}
 
@@ -458,12 +461,17 @@ public class ClientIfcModel extends IfcModel {
 
 	private void processDownload(Long download) throws UserException, ServerException, PublicInterfaceNotFoundException, IfcModelInterfaceException, IOException {
 		InputStream downloadData = bimServerClient.getDownloadData(download, getJsonSerializerOid());
+		if (downloadData == null) {
+			throw new IfcModelInterfaceException("No InputStream to read from");
+		}
 		try {
 			new SharedJsonDeserializer(true).read(downloadData, this, false);
 		} catch (DeserializeException e) {
-			LOGGER.error("", e);
+			throw new IfcModelInterfaceException(e);
 		} finally {
-			downloadData.close();
+			if (downloadData != null) {
+				downloadData.close();
+			}
 		}
 	}
 
@@ -719,7 +727,7 @@ public class ClientIfcModel extends IfcModel {
 		if (recordChanges) {
 			idEObject.eAdapters().add(adapter);
 			try {
-				Long oid = bimServerClient.getLowLevelInterface().createObject(tid, eClass.getName(), true);
+				Long oid = bimServerClient.getLowLevelInterface().createObject(tid, eClass.getName(), eClass.getEStructuralFeature("GlobalId") != null);
 				idEObject.setOid(oid);
 			} catch (Exception e) {
 				LOGGER.error("", e);

@@ -6,70 +6,24 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Random;
 
 import org.bimserver.BimServer;
 import org.bimserver.BimServerConfig;
+import org.bimserver.EmbeddedWebServer;
 import org.bimserver.LocalDevPluginLoader;
+import org.bimserver.plugins.OptionsParser;
 import org.bimserver.plugins.services.BimServerClientInterface;
 import org.bimserver.shared.BimServerClientFactory;
 import org.bimserver.shared.LocalDevelopmentResourceFetcher;
-import org.bimserver.tests.emf.CreateGuid;
-import org.bimserver.tests.emf.DeleteObjects;
-import org.bimserver.tests.emf.ListWalls;
-import org.bimserver.tests.emf.LoadCompleteModel;
-import org.bimserver.tests.emf.ReadTrim;
-import org.bimserver.tests.emf.RemoveReferenceList;
-import org.bimserver.tests.lowlevel.AddReferenceWithOpposite;
-import org.bimserver.tests.lowlevel.AddReferenceWithOppositeExisting;
-import org.bimserver.tests.lowlevel.CreateLists;
-import org.bimserver.tests.lowlevel.CreateReferenceListsAndClear;
-import org.bimserver.tests.lowlevel.CreateUnknownType;
-import org.bimserver.tests.lowlevel.GetDataObjectsByType;
-import org.bimserver.tests.lowlevel.IfcMeasureWithUnit;
-import org.bimserver.tests.lowlevel.RemoveObject;
-import org.bimserver.tests.lowlevel.RemoveObject2;
-import org.bimserver.tests.lowlevel.RemoveReferenceWithOpposite;
-import org.bimserver.tests.lowlevel.SetReferenceWithOpposite;
-import org.bimserver.tests.lowlevel.SetString;
-import org.bimserver.tests.lowlevel.UnsetReference;
-import org.bimserver.tests.lowlevel.UnsetReferenceWithOpposite;
-import org.bimserver.tests.serviceinterface.MultiCheckinAndDownload;
-import org.bimserver.tests.serviceinterface.SingleCheckinAndDownload;
-import org.bimserver.tests.serviceinterface.UpdateProject;
+import org.bimserver.shared.UsernamePasswordAuthenticationInfo;
 import org.bimserver.utils.PathUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-		AddReferenceWithOpposite.class,
-		AddReferenceWithOppositeExisting.class,
-        CreateGuid.class,
-        CreateLists.class,
-        CreateReferenceListsAndClear.class,
-        CreateUnknownType.class,
-        GetDataObjectsByType.class,
-        IfcMeasureWithUnit.class,
-        SetString.class,
-        RemoveObject.class,
-        RemoveObject2.class,
-        RemoveReferenceWithOpposite.class,
-        SetReferenceWithOpposite.class,
-        UnsetReference.class,
-        UnsetReferenceWithOpposite.class,
-        DeleteObjects.class,
-        ListWalls.class,
-        LoadCompleteModel.class,
-        MultiCheckinAndDownload.class,
-        ReadTrim.class,
-        SingleCheckinAndDownload.class,
-        RemoveReferenceList.class,
-        UpdateProject.class})
+import org.slf4j.LoggerFactory;
 public class AllTests {
 	public static BimServer bimServer;
 	public static boolean running = false;
-	private static BimServerClientFactory factory;
 
 	@BeforeClass
 	public static void beforeClass() {
@@ -79,7 +33,7 @@ public class AllTests {
 
 	private static void setup() {
 		// Create a config
-		Path home = Paths.get("home");
+		Path home = Paths.get("home-" + new Random().nextInt(1000000000));
 		
 		// Remove the home dir if it's there
 		if (Files.exists(home)) {
@@ -92,28 +46,50 @@ public class AllTests {
 		
 		BimServerConfig config = new BimServerConfig();
 		config.setHomeDir(home);
-		config.setStartEmbeddedWebServer(true);
-		config.setPort(8080);
+		config.setStartEmbeddedWebServer(false);
+		config.setPort(7010);
 		config.setResourceFetcher(new LocalDevelopmentResourceFetcher(Paths.get("../")));
 		config.setClassPath(System.getProperty("java.class.path"));
 		
 		bimServer = new BimServer(config);
 		try {
-			// CHANGE THESE TO MATCH YOUR CONFIGURATION
-			Path[] pluginDirectories = new Path[]{Paths.get("D:\\Git\\BIMserverMaster")};
+			bimServer.setEmbeddedWebServer(new EmbeddedWebServer(bimServer, Paths.get("."), false));
 			
-			// Load plugins
-			LocalDevPluginLoader.loadPlugins(bimServer.getPluginManager(), pluginDirectories);
-
+			// CHANGE THESE TO MATCH YOUR CONFIGURATION
+//			Path[] pluginDirectories = new Path[]{Paths.get("C:\\Git\\IfcPlugins\\IfcPlugins"), Paths.get("C:\\Git\\IfcOpenShell-BIMserver-plugin")};
+			
 			// Start it
 			bimServer.start();
-			
+
+			// Load plugins
+//			LocalDevPluginLoader.loadPlugins(bimServer.getPluginManager(), pluginDirectories);
+
 			// Get a client, not using any protocol (direct connection)
 			BimServerClientInterface client = bimServer.getBimServerClientFactory().create();
 
 			// Setup the server
-			client.getAdminInterface().setup("http://localhost:8080", "Administrator", "admin@bimserver.org", "admin", null, null, null);
+			client.getAdminInterface().setup("http://localhost:8080", "Test Name", "Test Description", "noicon", "Administrator", "admin@bimserver.org", "admin");
+		
+			client.disconnect();
 			
+			client = bimServer.getBimServerClientFactory().create(new UsernamePasswordAuthenticationInfo("admin@bimserver.org", "admin"));
+			
+			String pluginsString = System.getProperty("plugins");
+			if (pluginsString != null) {
+				String[] plugins = pluginsString.split(";");
+				Path[] paths = new Path[plugins.length];
+				int i=0;
+				for (String p : plugins) {
+					paths[i++] = Paths.get(p);
+				}
+				LocalDevPluginLoader.loadPlugins(bimServer.getPluginManager(), paths);
+			} else {
+				LoggerFactory.getLogger(AllTests.class).info("Installing plugins");
+				client.getPluginInterface().installPluginBundle("http://archiva.logic-labs.nl/repository/snapshots", "org.opensourcebim", "ifcplugins", null, null);
+				client.getPluginInterface().installPluginBundle("http://archiva.logic-labs.nl/repository/snapshots", "org.opensourcebim", "binaryserializers", null, null);
+				client.getPluginInterface().installPluginBundle("http://archiva.logic-labs.nl/repository/snapshots", "org.opensourcebim", "ifcopenshellplugin", null, null);
+			}
+
 			client.disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -123,17 +99,16 @@ public class AllTests {
 	
 	@AfterClass
 	public static void afterClass() {
-		bimServer.stop();
-		running = false;
+		resetBimServer();
 	}
 
 	public static BimServerClientFactory getFactory() {
-		if (factory == null) {
-			factory = bimServer.getBimServerClientFactory();
-//			factory = new JsonBimServerClientFactory(bimServer.getMetaDataManager(), "http://localhost:8080");
-//			factory = new ProtocolBuffersBimServerClientFactory("localhost", 8020, 8080);
+		if (bimServer == null) {
+			setup();
 		}
-		return factory;
+		BimServerClientFactory bimServerClientFactory = bimServer.getBimServerClientFactory();
+		System.out.println(bimServerClientFactory);
+		return bimServerClientFactory;
 	}
 	
 	public static BimServer getBimServer() {
@@ -141,5 +116,22 @@ public class AllTests {
 			setup();
 		}
 		return bimServer;
+	}
+
+	public static void resetBimServer() {
+		try {
+			if (bimServer != null) {
+				bimServer.stop();
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				bimServer = null;
+				running = false;
+			}
+		} catch (Throwable e) {
+			e.printStackTrace();
+		}
 	}
 }

@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.opensourcebim</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.5.64-SNAPSHOT</version>
+		<version>1.5.66-SNAPSHOT</version>
 	</parent>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
@@ -26,6 +26,11 @@
 			<groupId>org.eclipse.aether</groupId>
 			<artifactId>aether-connector-basic</artifactId>
 			<version>1.0.2.v20150114</version>
+		</dependency>
+		<dependency>
+			<groupId>it.unimi.dsi</groupId>
+			<artifactId>fastutil</artifactId>
+			<version>7.0.13</version>
 		</dependency>
 		<dependency>
 			<groupId>javassist</groupId>
@@ -50,7 +55,7 @@
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>pluginbase</artifactId>
-			<version>1.5.64-SNAPSHOT</version>
+			<version>1.5.66-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 </project>

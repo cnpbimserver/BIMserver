@@ -599,7 +599,7 @@ public class BimServer {
 			if (!Files.exists(mavenPath)) {
 				Files.createDirectories(mavenPath);
 			}
-			mavenPluginRepository = new MavenPluginRepository(mavenPath, "https://repo1.maven.org/maven2");
+			mavenPluginRepository = new MavenPluginRepository(mavenPath, "http://central.maven.org/maven2", "~/.m2/repository");
 			
 			OldQuery.setPackageMetaDataForDefaultQuery(metaDataManager.getPackageMetaData("store"));
 
@@ -818,6 +818,7 @@ public class BimServer {
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	public void updateUserPlugin(DatabaseSession session, User user, PluginDescriptor pluginDescriptor, PluginContext pluginContext) throws BimserverDatabaseException {
 		if (pluginDescriptor.isInstallForNewUsers()) {
 			UserSettings userSettings = user.getUserSettings();
@@ -964,6 +965,7 @@ public class BimServer {
 		return null;
 	}
 
+	@SuppressWarnings("unused")
 	private WebModulePluginConfiguration findWebModule(ServerSettings serverSettings, String identifier) {
 		for (Entry<PluginContext, WebModulePlugin> entry : pluginManager.getAllWebPlugins(true).entrySet()) {
 			WebModulePluginConfiguration webPluginConfiguration = find(serverSettings.getWebModules(), identifier);
@@ -1189,6 +1191,12 @@ public class BimServer {
 		ple.start();
 		FileAppender<ILoggingEvent> fileAppender = new FileAppender<ILoggingEvent>();
 		String filename = file.toAbsolutePath().toString();
+
+		if (lc instanceof LoggerContext) {
+		    if (!lc.isStarted()) {
+		    	lc.start();
+		    }
+		}
 		
 		System.out.println("Logging to " + filename);
 		
@@ -1256,7 +1264,10 @@ public class BimServer {
 		LOGGER.info("Stopping BIMserver");
 		executorService.shutdown();
 		if (bimDatabase != null) {
-			bimDatabase.close();
+			try {
+				bimDatabase.close();
+			} catch (Throwable t) {
+			}
 		}
 		if (bimScheduler != null) {
 			bimScheduler.close();
@@ -1276,7 +1287,13 @@ public class BimServer {
 		if (commandLine != null) {
 			commandLine.shutdown();
 		}
+		pluginManager.close();
 		LOGGER.info("BIMserver stopped");
+//		ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
+//		if (loggerFactory instanceof LoggerContext) {
+//		    LoggerContext context = (LoggerContext) loggerFactory;
+//		    context.stop();
+//		}
 	}
 
 	public PluginManager getPluginManager() {

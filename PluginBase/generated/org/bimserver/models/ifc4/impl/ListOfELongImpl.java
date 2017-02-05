@@ -17,31 +17,34 @@
 package org.bimserver.models.ifc4.impl;
 
 import org.bimserver.emf.IdEObjectImpl;
+
 import org.bimserver.models.ifc4.Ifc4Package;
-import org.bimserver.models.ifc4.ListOfEInt;
+import org.bimserver.models.ifc4.ListOfELong;
+
 import org.eclipse.emf.common.util.EList;
+
 import org.eclipse.emf.ecore.EClass;
 
 /**
  * <!-- begin-user-doc -->
- * An implementation of the model object '<em><b>List Of EInt</b></em>'.
+ * An implementation of the model object '<em><b>List Of ELong</b></em>'.
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
  * </p>
  * <ul>
- *   <li>{@link org.bimserver.models.ifc4.impl.ListOfEIntImpl#getList <em>List</em>}</li>
+ *   <li>{@link org.bimserver.models.ifc4.impl.ListOfELongImpl#getList <em>List</em>}</li>
  * </ul>
  *
  * @generated
  */
-public class ListOfEIntImpl extends IdEObjectImpl implements ListOfEInt {
+public class ListOfELongImpl extends IdEObjectImpl implements ListOfELong {
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	protected ListOfEIntImpl() {
+	protected ListOfELongImpl() {
 		super();
 	}
 
@@ -52,7 +55,7 @@ public class ListOfEIntImpl extends IdEObjectImpl implements ListOfEInt {
 	 */
 	@Override
 	protected EClass eStaticClass() {
-		return Ifc4Package.Literals.LIST_OF_EINT;
+		return Ifc4Package.Literals.LIST_OF_ELONG;
 	}
 
 	/**
@@ -71,8 +74,8 @@ public class ListOfEIntImpl extends IdEObjectImpl implements ListOfEInt {
 	 * @generated
 	 */
 	@SuppressWarnings("unchecked")
-	public EList<Integer> getList() {
-		return (EList<Integer>) eGet(Ifc4Package.Literals.LIST_OF_EINT__LIST, true);
+	public EList<Long> getList() {
+		return (EList<Long>) eGet(Ifc4Package.Literals.LIST_OF_ELONG__LIST, true);
 	}
 
-} //ListOfEIntImpl
+} //ListOfELongImpl

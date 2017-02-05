@@ -23,13 +23,10 @@ import java.nio.ByteOrder;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import org.bimserver.BimServer;
 import org.bimserver.BimserverDatabaseException;
-import org.bimserver.GeometryCache;
 import org.bimserver.GeometryGeneratingException;
-import org.bimserver.GeometryGenerator;
 import org.bimserver.StreamingGeometryGenerator;
 import org.bimserver.SummaryMap;
 import org.bimserver.changes.Change;
@@ -69,7 +66,6 @@ public class CommitTransactionDatabaseAction extends GenericCheckinDatabaseActio
 	private Revision revision;
 	private Authorization authorization;
 	private BimServer bimServer;
-	private final GeometryCache geometryCache = new GeometryCache();
 
 	public CommitTransactionDatabaseAction(BimServer bimServer, DatabaseSession databaseSession, AccessMethod accessMethod, Authorization authorization, LongTransaction longTransaction, String comment) {
 		super(databaseSession, accessMethod);

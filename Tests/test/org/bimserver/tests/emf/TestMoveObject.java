@@ -2,6 +2,7 @@ package org.bimserver.tests.emf;
 
 import static org.junit.Assert.fail;
 
+import java.net.URL;
 import java.nio.file.Paths;
 
 import org.bimserver.emf.IfcModelInterface;
@@ -20,7 +21,7 @@ import org.bimserver.shared.UsernamePasswordAuthenticationInfo;
 import org.bimserver.tests.utils.TestWithEmbeddedServer;
 import org.junit.Test;
 
-public class MoveObject extends TestWithEmbeddedServer{
+public class TestMoveObject extends TestWithEmbeddedServer{
 	@Test
 	public void test() {
 		try {
@@ -34,12 +35,12 @@ public class MoveObject extends TestWithEmbeddedServer{
 			SDeserializerPluginConfiguration deserializer = bimServerClient.getServiceInterface().getSuggestedDeserializerForExtension("ifc", newProject.getOid());
 
 			// Checkin the file
-			bimServerClient.checkin(newProject.getOid(), "test", deserializer.getOid(), false, Flow.SYNC, Paths.get("../TestData/data/AC11-Institute-Var-2-IFC.ifc"));
+			bimServerClient.checkin(newProject.getOid(), "test", deserializer.getOid(), false, Flow.SYNC, new URL("https://github.com/opensourceBIM/TestFiles/raw/master/TestData/data/AC11-Institute-Var-2-IFC.ifc"));
 
 			// Refresh project info
 			newProject = bimServerClient.getServiceInterface().getProjectByPoid(newProject.getOid());
 
-			IfcModelInterface model = bimServerClient.getModel(newProject, newProject.getLastRevisionId(), true, false);
+			IfcModelInterface model = bimServerClient.getModel(newProject, newProject.getLastRevisionId(), true, true);
 			for (IfcFurnishingElement ifcFurnishingElement : model.getAllWithSubTypes(IfcFurnishingElement.class)) {
 				IfcObjectPlacement objectPlacement = ifcFurnishingElement.getObjectPlacement();
 				if (objectPlacement != null && objectPlacement instanceof IfcLocalPlacement) {
