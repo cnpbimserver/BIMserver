@@ -30,7 +30,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -283,14 +282,16 @@ public class BimServerClient implements ConnectDisconnectListener, TokenHolder, 
 		try {
 			InputStream openStream = url.openStream();
 			if (flow == Flow.SYNC) {
-				long topicId = channel.checkin(baseAddress, token, poid, comment, deserializerOid, merge, flow, -1, url.toString(), openStream);
-				openStream.close();
-				
-				SLongActionState progress = getNotificationRegistryInterface().getProgress(topicId);
-				if (progress.getState() == SActionState.AS_ERROR) {
-					throw new UserException(Joiner.on(", ").join(progress.getErrors()));
-				} else {
-					return topicId;
+				try {
+					long topicId = channel.checkin(baseAddress, token, poid, comment, deserializerOid, merge, flow, -1, url.toString(), openStream);
+					SLongActionState progress = getNotificationRegistryInterface().getProgress(topicId);
+					if (progress.getState() == SActionState.AS_ERROR) {
+						throw new UserException(Joiner.on(", ").join(progress.getErrors()));
+					} else {
+						return topicId;
+					}
+				} finally {
+					openStream.close();
 				}
 			} else {
 				long topicId = channel.checkin(baseAddress, token, poid, comment, deserializerOid, merge, flow, -1, url.toString(), openStream);
