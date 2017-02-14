@@ -2,6 +2,7 @@ package org.bimserver.tests.lowlevel;
 
 import static org.junit.Assert.fail;
 
+import java.net.URL;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -15,10 +16,10 @@ import org.bimserver.plugins.services.BimServerClientInterface;
 import org.bimserver.plugins.services.Flow;
 import org.bimserver.shared.UsernamePasswordAuthenticationInfo;
 import org.bimserver.shared.interfaces.LowLevelInterface;
-import org.bimserver.tests.utils.TestWithEmbeddedServer;
+import org.bimserver.test.TestWithEmbeddedServer;
 import org.junit.Test;
 
-public class MoveFurniture extends TestWithEmbeddedServer {
+public class TestMoveFurniture extends TestWithEmbeddedServer {
 	@Test
 	public void test() {
 		try {
@@ -32,7 +33,7 @@ public class MoveFurniture extends TestWithEmbeddedServer {
 			SDeserializerPluginConfiguration deserializer = bimServerClient.getServiceInterface().getSuggestedDeserializerForExtension("ifc", newProject.getOid());
 
 			// Checkin the file
-			bimServerClient.checkin(newProject.getOid(), "test", deserializer.getOid(), false, Flow.SYNC, Paths.get("../TestData/data/AC11-Institute-Var-2-IFC.ifc"));
+			bimServerClient.checkin(newProject.getOid(), "test", deserializer.getOid(), false, Flow.SYNC, new URL("https://github.com/opensourceBIM/TestFiles/raw/master/TestData/data/AC11-Institute-Var-2-IFC.ifc"));
 
 			// Refresh project info
 			newProject = bimServerClient.getServiceInterface().getProjectByPoid(newProject.getOid());

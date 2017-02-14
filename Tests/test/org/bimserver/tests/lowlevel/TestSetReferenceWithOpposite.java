@@ -2,14 +2,16 @@ package org.bimserver.tests.lowlevel;
 
 import static org.junit.Assert.fail;
 
+import java.util.List;
+
 import org.bimserver.interfaces.objects.SProject;
 import org.bimserver.plugins.services.BimServerClientInterface;
 import org.bimserver.shared.UsernamePasswordAuthenticationInfo;
 import org.bimserver.shared.interfaces.LowLevelInterface;
-import org.bimserver.tests.utils.TestWithEmbeddedServer;
+import org.bimserver.test.TestWithEmbeddedServer;
 import org.junit.Test;
 
-public class IfcMeasureWithUnit extends TestWithEmbeddedServer {
+public class TestSetReferenceWithOpposite extends TestWithEmbeddedServer {
 
 	@Test
 	public void test() {
@@ -17,7 +19,6 @@ public class IfcMeasureWithUnit extends TestWithEmbeddedServer {
 			// Create a new BimServerClient with authentication
 			BimServerClientInterface bimServerClient = getFactory().create(new UsernamePasswordAuthenticationInfo("admin@bimserver.org", "admin"));
 			
-			// Get the low level interface
 			LowLevelInterface lowLevelInterface = bimServerClient.getLowLevelInterface();
 			
 			// Create a new project
@@ -26,17 +27,19 @@ public class IfcMeasureWithUnit extends TestWithEmbeddedServer {
 			// Start a transaction
 			Long tid = lowLevelInterface.startTransaction(newProject.getOid());
 			
-			// Create furnishing
-			Long ifcMeasureWithUnitOid = lowLevelInterface.createObject(tid, "IfcMeasureWithUnit", false);
-			lowLevelInterface.setWrappedDoubleAttribute(tid, ifcMeasureWithUnitOid, "ValueComponent", "IfcPlaneAngleMeasure", 0.12345);
-
-			// Commit the transaction
-			lowLevelInterface.commitTransaction(tid, "test");
-
+			Long ifcRelContainedInSpatialStructureOid = lowLevelInterface.createObject(tid, "IfcRelContainedInSpatialStructure", true);
+			Long ifcBuildingOid = lowLevelInterface.createObject(tid, "IfcBuilding", true);
+			lowLevelInterface.setReference(tid, ifcRelContainedInSpatialStructureOid, "RelatingStructure", ifcBuildingOid);
+			
+			lowLevelInterface.commitTransaction(tid, "Initial");
+			
 			tid = lowLevelInterface.startTransaction(newProject.getOid());
-			double v = lowLevelInterface.getDoubleAttribute(tid, ifcMeasureWithUnitOid, "ValueComponent");
-			if (v != 0.12345) {
-				fail("0.12345 expected, got " + v);
+			List<Long> references = lowLevelInterface.getReferences(tid, ifcBuildingOid, "ContainsElements");
+			if (references.size() != 1) {
+				fail("Should be 1");
+			}
+			if (!references.get(0).equals(ifcRelContainedInSpatialStructureOid)) {
+				fail("Wrong " + references.get(0) + " / " + ifcRelContainedInSpatialStructureOid);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

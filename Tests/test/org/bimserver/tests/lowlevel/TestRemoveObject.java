@@ -2,16 +2,14 @@ package org.bimserver.tests.lowlevel;
 
 import static org.junit.Assert.fail;
 
-import java.util.List;
-
 import org.bimserver.interfaces.objects.SProject;
 import org.bimserver.plugins.services.BimServerClientInterface;
 import org.bimserver.shared.UsernamePasswordAuthenticationInfo;
 import org.bimserver.shared.interfaces.LowLevelInterface;
-import org.bimserver.tests.utils.TestWithEmbeddedServer;
+import org.bimserver.test.TestWithEmbeddedServer;
 import org.junit.Test;
 
-public class SetReferenceWithOpposite extends TestWithEmbeddedServer {
+public class TestRemoveObject extends TestWithEmbeddedServer {
 
 	@Test
 	public void test() {
@@ -29,17 +27,18 @@ public class SetReferenceWithOpposite extends TestWithEmbeddedServer {
 			
 			Long ifcRelContainedInSpatialStructureOid = lowLevelInterface.createObject(tid, "IfcRelContainedInSpatialStructure", true);
 			Long ifcBuildingOid = lowLevelInterface.createObject(tid, "IfcBuilding", true);
-			lowLevelInterface.setReference(tid, ifcRelContainedInSpatialStructureOid, "RelatingStructure", ifcBuildingOid);
+			lowLevelInterface.addReference(tid, ifcBuildingOid, "ContainsElements", ifcRelContainedInSpatialStructureOid);
 			
 			lowLevelInterface.commitTransaction(tid, "Initial");
 			
 			tid = lowLevelInterface.startTransaction(newProject.getOid());
-			List<Long> references = lowLevelInterface.getReferences(tid, ifcBuildingOid, "ContainsElements");
-			if (references.size() != 1) {
-				fail("Should be 1");
-			}
-			if (!references.get(0).equals(ifcRelContainedInSpatialStructureOid)) {
-				fail("Wrong " + references.get(0) + " / " + ifcRelContainedInSpatialStructureOid);
+			lowLevelInterface.removeObject(tid, ifcBuildingOid);
+			lowLevelInterface.commitTransaction(tid, "removed");
+			
+			tid = lowLevelInterface.startTransaction(newProject.getOid());
+			long reference = lowLevelInterface.getReference(tid, ifcRelContainedInSpatialStructureOid, "RelatingStructure");
+			if (reference != -1) {
+				fail("Should be unset (is " + reference + ")");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

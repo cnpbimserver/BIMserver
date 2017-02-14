@@ -1,15 +1,16 @@
 package org.bimserver.tests.lowlevel;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.bimserver.interfaces.objects.SProject;
 import org.bimserver.plugins.services.BimServerClientInterface;
 import org.bimserver.shared.UsernamePasswordAuthenticationInfo;
 import org.bimserver.shared.interfaces.LowLevelInterface;
-import org.bimserver.tests.utils.TestWithEmbeddedServer;
+import org.bimserver.test.TestWithEmbeddedServer;
 import org.junit.Test;
 
-public class RemoveObject extends TestWithEmbeddedServer {
+public class TestCreateGuid extends TestWithEmbeddedServer {
 
 	@Test
 	public void test() {
@@ -17,6 +18,7 @@ public class RemoveObject extends TestWithEmbeddedServer {
 			// Create a new BimServerClient with authentication
 			BimServerClientInterface bimServerClient = getFactory().create(new UsernamePasswordAuthenticationInfo("admin@bimserver.org", "admin"));
 			
+			// Get the low level interface
 			LowLevelInterface lowLevelInterface = bimServerClient.getLowLevelInterface();
 			
 			// Create a new project
@@ -25,21 +27,15 @@ public class RemoveObject extends TestWithEmbeddedServer {
 			// Start a transaction
 			Long tid = lowLevelInterface.startTransaction(newProject.getOid());
 			
-			Long ifcRelContainedInSpatialStructureOid = lowLevelInterface.createObject(tid, "IfcRelContainedInSpatialStructure", true);
-			Long ifcBuildingOid = lowLevelInterface.createObject(tid, "IfcBuilding", true);
-			lowLevelInterface.addReference(tid, ifcBuildingOid, "ContainsElements", ifcRelContainedInSpatialStructureOid);
+			// Create furnishing
+			Long furnishingOid = lowLevelInterface.createObject(tid, "IfcFurnishingElement", true);
+			lowLevelInterface.setStringAttribute(tid, furnishingOid, "GlobalId", "0uyjn9Jan3nRq36Uj6gwws");
 			
-			lowLevelInterface.commitTransaction(tid, "Initial");
-			
+			// Commit the transaction
+			lowLevelInterface.commitTransaction(tid, "test");
+
 			tid = lowLevelInterface.startTransaction(newProject.getOid());
-			lowLevelInterface.removeObject(tid, ifcBuildingOid);
-			lowLevelInterface.commitTransaction(tid, "removed");
-			
-			tid = lowLevelInterface.startTransaction(newProject.getOid());
-			long reference = lowLevelInterface.getReference(tid, ifcRelContainedInSpatialStructureOid, "RelatingStructure");
-			if (reference != -1) {
-				fail("Should be unset (is " + reference + ")");
-			}
+			assertTrue(lowLevelInterface.getStringAttribute(tid, furnishingOid, "GlobalId").equals("0uyjn9Jan3nRq36Uj6gwws"));
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());

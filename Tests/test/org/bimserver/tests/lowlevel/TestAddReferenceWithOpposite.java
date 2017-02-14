@@ -6,10 +6,10 @@ import org.bimserver.interfaces.objects.SProject;
 import org.bimserver.plugins.services.BimServerClientInterface;
 import org.bimserver.shared.UsernamePasswordAuthenticationInfo;
 import org.bimserver.shared.interfaces.LowLevelInterface;
-import org.bimserver.tests.utils.TestWithEmbeddedServer;
+import org.bimserver.test.TestWithEmbeddedServer;
 import org.junit.Test;
 
-public class RemoveReferenceWithOpposite extends TestWithEmbeddedServer {
+public class TestAddReferenceWithOpposite extends TestWithEmbeddedServer {
 
 	@Test
 	public void test() {
@@ -26,18 +26,14 @@ public class RemoveReferenceWithOpposite extends TestWithEmbeddedServer {
 			Long tid = lowLevelInterface.startTransaction(newProject.getOid());
 			
 			Long ifcRelContainedInSpatialStructureOid = lowLevelInterface.createObject(tid, "IfcRelContainedInSpatialStructure", true);
-			Long ifcBuildingOid1 = lowLevelInterface.createObject(tid, "IfcBuilding", true);
-			lowLevelInterface.addReference(tid, ifcBuildingOid1, "ContainsElements", ifcRelContainedInSpatialStructureOid);
+			Long ifcBuildingOid = lowLevelInterface.createObject(tid, "IfcBuilding", true);
+			lowLevelInterface.addReference(tid, ifcBuildingOid, "ContainsElements", ifcRelContainedInSpatialStructureOid);
 			
 			lowLevelInterface.commitTransaction(tid, "Initial");
 			
 			tid = lowLevelInterface.startTransaction(newProject.getOid());
-			lowLevelInterface.removeReference(tid, ifcBuildingOid1, "ContainsElements", 0);
-			lowLevelInterface.commitTransaction(tid, "2");
-			
-			tid = lowLevelInterface.startTransaction(newProject.getOid());
-			if (lowLevelInterface.getReference(tid, ifcRelContainedInSpatialStructureOid, "RelatingStructure") != -1) {
-				fail("Reference should no be set");
+			if (!lowLevelInterface.getReference(tid, ifcRelContainedInSpatialStructureOid, "RelatingStructure").equals(ifcBuildingOid)) {
+				fail("Not the same");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

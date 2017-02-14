@@ -2,17 +2,14 @@ package org.bimserver.tests.lowlevel;
 
 import static org.junit.Assert.fail;
 
-import java.util.List;
-
-import org.bimserver.interfaces.objects.SDataObject;
 import org.bimserver.interfaces.objects.SProject;
 import org.bimserver.plugins.services.BimServerClientInterface;
 import org.bimserver.shared.UsernamePasswordAuthenticationInfo;
 import org.bimserver.shared.interfaces.LowLevelInterface;
-import org.bimserver.tests.utils.TestWithEmbeddedServer;
+import org.bimserver.test.TestWithEmbeddedServer;
 import org.junit.Test;
 
-public class GetDataObjectsByType extends TestWithEmbeddedServer{
+public class TestIfcMeasureWithUnit extends TestWithEmbeddedServer {
 
 	@Test
 	public void test() {
@@ -30,17 +27,16 @@ public class GetDataObjectsByType extends TestWithEmbeddedServer{
 			Long tid = lowLevelInterface.startTransaction(newProject.getOid());
 			
 			// Create furnishing
-			Long wallOid = lowLevelInterface.createObject(tid, "IfcWall", true);
-			Long relContainedInSpatialStructure = lowLevelInterface.createObject(tid, "IfcRelContainedInSpatialStructure", true);
-			lowLevelInterface.addReference(tid, relContainedInSpatialStructure, "RelatedElements", wallOid);
-			
+			Long ifcMeasureWithUnitOid = lowLevelInterface.createObject(tid, "IfcMeasureWithUnit", false);
+			lowLevelInterface.setWrappedDoubleAttribute(tid, ifcMeasureWithUnitOid, "ValueComponent", "IfcPlaneAngleMeasure", 0.12345);
+
 			// Commit the transaction
 			lowLevelInterface.commitTransaction(tid, "test");
-			newProject = bimServerClient.getServiceInterface().getProjectByPoid(newProject.getOid());
 
-			List<SDataObject> dataObjectsByType = lowLevelInterface.getDataObjectsByType(newProject.getLastRevisionId(), "ifc2x3tc1", "IfcRelContainedInSpatialStructure", false);
-			for (SDataObject sDataObject : dataObjectsByType) {
-				System.out.println(sDataObject);
+			tid = lowLevelInterface.startTransaction(newProject.getOid());
+			double v = lowLevelInterface.getDoubleAttribute(tid, ifcMeasureWithUnitOid, "ValueComponent");
+			if (v != 0.12345) {
+				fail("0.12345 expected, got " + v);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

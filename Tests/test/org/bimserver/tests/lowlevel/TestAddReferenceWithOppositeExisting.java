@@ -5,11 +5,13 @@ import static org.junit.Assert.fail;
 import org.bimserver.interfaces.objects.SProject;
 import org.bimserver.plugins.services.BimServerClientInterface;
 import org.bimserver.shared.UsernamePasswordAuthenticationInfo;
+import org.bimserver.shared.exceptions.ErrorCode;
+import org.bimserver.shared.exceptions.UserException;
 import org.bimserver.shared.interfaces.LowLevelInterface;
-import org.bimserver.tests.utils.TestWithEmbeddedServer;
+import org.bimserver.test.TestWithEmbeddedServer;
 import org.junit.Test;
 
-public class AddReferenceWithOpposite extends TestWithEmbeddedServer {
+public class TestAddReferenceWithOppositeExisting extends TestWithEmbeddedServer {
 
 	@Test
 	public void test() {
@@ -26,14 +28,20 @@ public class AddReferenceWithOpposite extends TestWithEmbeddedServer {
 			Long tid = lowLevelInterface.startTransaction(newProject.getOid());
 			
 			Long ifcRelContainedInSpatialStructureOid = lowLevelInterface.createObject(tid, "IfcRelContainedInSpatialStructure", true);
-			Long ifcBuildingOid = lowLevelInterface.createObject(tid, "IfcBuilding", true);
-			lowLevelInterface.addReference(tid, ifcBuildingOid, "ContainsElements", ifcRelContainedInSpatialStructureOid);
+			Long ifcBuildingOid1 = lowLevelInterface.createObject(tid, "IfcBuilding", true);
+			Long ifcBuildingOid2 = lowLevelInterface.createObject(tid, "IfcBuilding", true);
+			lowLevelInterface.addReference(tid, ifcBuildingOid1, "ContainsElements", ifcRelContainedInSpatialStructureOid);
 			
 			lowLevelInterface.commitTransaction(tid, "Initial");
 			
 			tid = lowLevelInterface.startTransaction(newProject.getOid());
-			if (!lowLevelInterface.getReference(tid, ifcRelContainedInSpatialStructureOid, "RelatingStructure").equals(ifcBuildingOid)) {
-				fail("Not the same");
+			lowLevelInterface.addReference(tid, ifcBuildingOid2, "ContainsElements", ifcRelContainedInSpatialStructureOid);
+			try {
+				lowLevelInterface.commitTransaction(tid, "2");
+			} catch (UserException e) {
+				if (e.getErrorCode() != ErrorCode.SET_REFERENCE_FAILED_OPPOSITE_ALREADY_SET) {
+					fail("Didn't get the right errormessage");
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -2,6 +2,7 @@ package org.bimserver.tests.lowlevel;
 
 import static org.junit.Assert.fail;
 
+import java.net.URL;
 import java.nio.file.Paths;
 
 import org.bimserver.emf.IfcModelInterface;
@@ -13,10 +14,10 @@ import org.bimserver.plugins.services.BimServerClientInterface;
 import org.bimserver.plugins.services.Flow;
 import org.bimserver.shared.UsernamePasswordAuthenticationInfo;
 import org.bimserver.shared.interfaces.LowLevelInterface;
-import org.bimserver.tests.utils.TestWithEmbeddedServer;
+import org.bimserver.test.TestWithEmbeddedServer;
 import org.junit.Test;
 
-public class SetString extends TestWithEmbeddedServer {
+public class TestSetString extends TestWithEmbeddedServer {
 
 	@Test
 	public void test() {
@@ -28,7 +29,7 @@ public class SetString extends TestWithEmbeddedServer {
 			SProject newProject = bimServerClient.getServiceInterface().addProject("test" + Math.random(), "ifc2x3tc1");
 			
 			SDeserializerPluginConfiguration suggestedDeserializerForExtension = bimServerClient.getServiceInterface().getSuggestedDeserializerForExtension("ifc", newProject.getOid());
-			bimServerClient.checkin(newProject.getOid(), "initial", suggestedDeserializerForExtension.getOid(), false, Flow.SYNC, Paths.get("../TestData/data/WallOnly.ifc"));
+			bimServerClient.checkin(newProject.getOid(), "initial", suggestedDeserializerForExtension.getOid(), false, Flow.SYNC, new URL("https://github.com/opensourceBIM/TestFiles/raw/master/TestData/data/WallOnly.ifc"));
 			newProject = bimServerClient.getServiceInterface().getProjectByPoid(newProject.getOid());
 			
 			SSerializerPluginConfiguration serializer = bimServerClient.getServiceInterface().getSerializerByName("Ifc2x3");
